@@ -12,7 +12,6 @@ from ..views import ProtectedResourceView
 
 from .test_utils import TestCaseUtils
 
-__all__ = []
 
 # mocking a protected resource view
 class ResourceView(ProtectedResourceView):
