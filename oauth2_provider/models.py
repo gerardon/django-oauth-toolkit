@@ -103,7 +103,7 @@ class Grant(Document):
     application = ReferenceField(Application, dbref=True)
     expires = DateTimeField()
     redirect_uri = StringField(max_length=255)
-    scope = TextField(blank=True)
+    scope = StringField(required=False)
 
     def is_expired(self):
         """
@@ -134,7 +134,7 @@ class AccessToken(Document):
     token = StringField(max_length=255)
     application = ReferenceField(Application, dbref=True)
     expires = DateTimeField()
-    scope = TextField(blank=True)
+    scope = StringField(required=False)
 
     def is_valid(self, scopes=None):
         """
