@@ -1,4 +1,5 @@
 from datetime import timedelta
+from uuid import uuid4
 
 from django.conf.urls import patterns, url, include
 from django.http import HttpResponse
@@ -7,7 +8,7 @@ from django.utils import timezone, unittest
 
 
 from .test_utils import TestCaseUtils
-from ..compat import get_user_model
+from ..compat import User
 from ..models import AccessToken, Application
 from ..settings import oauth2_settings
 
@@ -60,8 +61,8 @@ class TestOAuth2Authentication(BaseTest):
     def setUp(self):
         oauth2_settings.SCOPES = ['read', 'write', 'scope1', 'scope2']
 
-        self.test_user = get_user_model().objects.create_user("test_user", "test@user.com", "123456")
-        self.dev_user = get_user_model().objects.create_user("dev_user", "dev@user.com", "123456")
+        self.test_user = User.objects.create(email="test@user.com", uuid=str(uuid4()))
+        self.dev_user = User.objects.create(email="dev@user.com", uuid=str(uuid4()))
 
         self.application = Application.objects.create(
             name="Test Application",
