@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from uuid import uuid4
 import json
 
 from django.core.urlresolvers import reverse
@@ -8,7 +9,7 @@ from django.views.generic import View
 
 from oauthlib.oauth2 import BackendApplicationServer
 
-from ..compat import get_user_model
+from ..compat import User
 from ..models import Application
 from ..oauth2_validators import OAuth2Validator
 from ..settings import oauth2_settings
@@ -26,8 +27,8 @@ class ResourceView(ProtectedResourceView):
 class BaseTest(TestCaseUtils, TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.test_user = get_user_model().objects.create_user("test_user", "test@user.com", "123456")
-        self.dev_user = get_user_model().objects.create_user("dev_user", "dev@user.com", "123456")
+        self.test_user = User.objects.create(email="test@user.com", uuid=str(uuid4()))
+        self.dev_user = User.objects.create(email="dev@user.com", uuid=str(uuid4()))
 
         self.application = Application(
             name="test_client_credentials_app",

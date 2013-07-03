@@ -1,15 +1,17 @@
 from __future__ import unicode_literals
 
+from uuid import uuid4
+
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
-from ..compat import get_user_model
+from ..compat import User
 from ..models import AccessToken, Application
 
 
 class TestModels(TestCase):
     def setUp(self):
-        self.user = get_user_model().objects.create_user("test_user", "test@user.com", "123456")
+        self.user = User.objects.create(email="test@user.com", uuid=str(uuid4()))
 
     def test_allow_scopes(self):
         self.client.login(username="test_user", password="123456")

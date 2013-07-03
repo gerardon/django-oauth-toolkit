@@ -1,12 +1,13 @@
 from __future__ import unicode_literals
 
+from uuid import uuid4
 import json
 
 from django.test import TestCase, RequestFactory
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-from ..compat import urlparse, parse_qs, urlencode, get_user_model
+from ..compat import urlparse, parse_qs, urlencode, User
 from ..models import Application, Grant
 from ..settings import oauth2_settings
 from ..views import ProtectedResourceView
@@ -23,8 +24,8 @@ class ResourceView(ProtectedResourceView):
 class BaseTest(TestCaseUtils, TestCase):
     def setUp(self):
         self.factory = RequestFactory()
-        self.test_user = get_user_model().objects.create_user("test_user", "test@user.com", "123456")
-        self.dev_user = get_user_model().objects.create_user("dev_user", "dev@user.com", "123456")
+        self.test_user = User.objects.create(email="test@user.com", uuid=str(uuid4()))
+        self.dev_user = User.objects.create(email="dev@user.com", uuid=str(uuid4()))
 
         self.application = Application(
             name="Test Application",
