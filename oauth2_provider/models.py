@@ -1,13 +1,13 @@
-from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+
+from mongoengine import *
 
 from .compat import User
 from .generators import generate_client_secret, generate_client_id
 from .validators import validate_uris
 
 
-class Application(models.Model):
+class Application(Document):
     """
     An Application instance represents a Client on the Authorization server. Usually an Application is created
     manually by client's developers after logging in on an Authorization Server.
@@ -27,8 +27,8 @@ class Application(models.Model):
     CLIENT_CONFIDENTIAL = 'confidential'
     CLIENT_PUBLIC = 'public'
     CLIENT_TYPES = (
-        (CLIENT_CONFIDENTIAL, _('Confidential')),
-        (CLIENT_PUBLIC, _('Public')),
+        (CLIENT_CONFIDENTIAL, ('Confidential')),
+        (CLIENT_PUBLIC, ('Public')),
     )
 
     GRANT_ALLINONE = 'all-in-one'
@@ -37,21 +37,21 @@ class Application(models.Model):
     GRANT_PASSWORD = 'password'
     GRANT_CLIENT_CREDENTIALS = 'client-credentials'
     GRANT_TYPES = (
-        (GRANT_ALLINONE, _('All-in-one generic')),
-        (GRANT_AUTHORIZATION_CODE, _('Authorization code')),
-        (GRANT_IMPLICIT, _('Implicit')),
-        (GRANT_PASSWORD, _('Resource owner password-based')),
-        (GRANT_CLIENT_CREDENTIALS, _('Client credentials')),
+        (GRANT_ALLINONE, ('All-in-one generic')),
+        (GRANT_AUTHORIZATION_CODE, ('Authorization code')),
+        (GRANT_IMPLICIT, ('Implicit')),
+        (GRANT_PASSWORD, ('Resource owner password-based')),
+        (GRANT_CLIENT_CREDENTIALS, ('Client credentials')),
     )
 
-    client_id = models.CharField(max_length=100, unique=True, default=generate_client_id)
-    user = models.ForeignKey(User)
-    redirect_uris = models.TextField(help_text=_("Allowed URIs list, space separated"),
-                                     validators=[validate_uris], blank=True)
-    client_type = models.CharField(max_length=32, choices=CLIENT_TYPES)
-    authorization_grant_type = models.CharField(max_length=32, choices=GRANT_TYPES)
-    client_secret = models.CharField(max_length=255, blank=True, default=generate_client_secret)
-    name = models.CharField(max_length=255, blank=True)
+    client_id = StringField(max_length=100, unique=True, default=generate_client_id)
+    user = ReferenceField(User, dbref=True)
+    redirect_uris = StringField(help_text=_("Allowed URIs list, space separated"),
+                                     validation=validate_uris, required=False)
+    client_type = StringField(max_length=32, choices=CLIENT_TYPES)
+    authorization_grant_type = StringField(max_length=32, choices=GRANT_TYPES)
+    client_secret = StringField(max_length=255, required=False, default=generate_client_secret)
+    name = StringField(max_length=255, required=False)
 
     @property
     def default_redirect_uri(self):
@@ -78,13 +78,13 @@ class Application(models.Model):
                                                                         Application.GRANT_AUTHORIZATION_CODE,
                                                                         Application.GRANT_IMPLICIT):
             raise ValidationError(
-                _('Redirect_uris could not be empty with {} grant_type'.format(self.authorization_grant_type)))
+                ('Redirect_uris could not be empty with {} grant_type'.format(self.authorization_grant_type)))
 
     def __unicode__(self):
         return self.client_id
 
 
-class Grant(models.Model):
+class Grant(Document):
     """
     A Grant instance represents a token with a short lifetime that can be swapped for an access token, as described
     in :rfc:`4.1.2`
@@ -98,12 +98,12 @@ class Grant(models.Model):
     * :attr:`redirect_uri` Self explained
     * :attr:`scope` Required scopes, optional
     """
-    user = models.ForeignKey(User)
-    code = models.CharField(max_length=255)  # code comes from oauthlib
-    application = models.ForeignKey(Application)
-    expires = models.DateTimeField()
-    redirect_uri = models.CharField(max_length=255)
-    scope = models.TextField(blank=True)
+    user = ReferenceField(User, dbref=True)
+    code = StringField(max_length=255)  # code comes from oauthlib
+    application = ReferenceField(Application, dbref=True)
+    expires = DateTimeField()
+    redirect_uri = StringField(max_length=255)
+    scope = TextField(blank=True)
 
     def is_expired(self):
         """
@@ -118,7 +118,7 @@ class Grant(models.Model):
         return self.code
 
 
-class AccessToken(models.Model):
+class AccessToken(Document):
     """
     An AccessToken instance represents the actual access token to access user's resources, as in :rfc:`5`.
 
@@ -130,11 +130,11 @@ class AccessToken(models.Model):
     * :attr:`expires` Expire time in seconds, defaults to :data:`settings.ACCESS_TOKEN_EXPIRE_SECONDS`
     * :attr:`scope` Allowed scopes
     """
-    user = models.ForeignKey(User)
-    token = models.CharField(max_length=255)
-    application = models.ForeignKey(Application)
-    expires = models.DateTimeField()
-    scope = models.TextField(blank=True)
+    user = ReferenceField(User, dbref=True)
+    token = StringField(max_length=255)
+    application = ReferenceField(Application, dbref=True)
+    expires = DateTimeField()
+    scope = TextField(blank=True)
 
     def is_valid(self, scopes=None):
         """
@@ -168,7 +168,7 @@ class AccessToken(models.Model):
         return self.token
 
 
-class RefreshToken(models.Model):
+class RefreshToken(Document):
     """
     A RefreshToken instance represents a token that can be swapped for a new access token when it expires.
 
@@ -179,10 +179,11 @@ class RefreshToken(models.Model):
     * :attr:`application` Application instance
     * :attr:`access_token` AccessToken instance this refresh token is bounded to
     """
-    user = models.ForeignKey(User)
-    token = models.CharField(max_length=255)
-    application = models.ForeignKey(Application)
-    access_token = models.OneToOneField(AccessToken, related_name='refresh_token')
+    user = ReferenceField(User, dbref=True)
+    token = StringField(max_length=255)
+    application = ReferenceField(Application, dbref=True)
+    access_token = ReferenceField(AccessToken, related_name='refresh_token', dbref=True)
 
     def __unicode__(self):
         return self.token
+
