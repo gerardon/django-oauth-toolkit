@@ -182,7 +182,7 @@ class RefreshToken(Document):
     user = ReferenceField(User, dbref=True)
     token = StringField(max_length=255)
     application = ReferenceField(Application, dbref=True)
-    access_token = ReferenceField(AccessToken, related_name='refresh_token', dbref=True)
+    access_token = ReferenceField(AccessToken, dbref=True)
 
     def __unicode__(self):
         return self.token
