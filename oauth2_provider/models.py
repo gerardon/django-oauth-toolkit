@@ -46,7 +46,7 @@ class Application(Document):
 
     client_id = StringField(max_length=100, unique=True, default=generate_client_id)
     user = ReferenceField(User, dbref=True)
-    redirect_uris = StringField(help_text=_("Allowed URIs list, space separated"),
+    redirect_uris = StringField(help_text=("Allowed URIs list, space separated"),
                                      validation=validate_uris, required=False)
     client_type = StringField(max_length=32, choices=CLIENT_TYPES)
     authorization_grant_type = StringField(max_length=32, choices=GRANT_TYPES)
